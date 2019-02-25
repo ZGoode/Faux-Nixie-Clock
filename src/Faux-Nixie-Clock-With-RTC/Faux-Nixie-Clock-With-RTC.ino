@@ -70,8 +70,8 @@ boolean h12;
 int litLEDS[8];
 int digits[4];
 
-int numbers1[10] = {};
-int numbers2[10] = {};
+int numbers1[10] = {10, 5, 3, 6, 9, 1, 4, 2, 7, 8};
+int numbers2[10] = {20, 15, 13, 16, 19, 11, 14, 12, 17, 18};
 
 int colorPattern = 0;
 
