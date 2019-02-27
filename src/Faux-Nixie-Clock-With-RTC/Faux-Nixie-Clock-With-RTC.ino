@@ -31,8 +31,8 @@ const int switch24HR = 13;
 
 const int patternAmount = 11;
 
-byte Hour;
-byte Minute;
+int Hour = 12;
+int Minute = 00;
 
 byte WheelR (byte WheelPos);
 byte WheelG (byte WheelPos);
@@ -40,11 +40,12 @@ byte WheelB (byte WheelPos);
 void rainbowCycle();
 void displayTime (byte r, byte g, byte b);
 void getDigits();
+void FreakOut();
 
 struct RGB {
-  byte r;
-  byte g;
-  byte b;
+  int r;
+  int g;
+  int b;
 };
 
 RGB White = {255, 255, 255};
@@ -70,8 +71,8 @@ boolean h12;
 int litLEDS[8];
 int digits[4];
 
-int numbers1[10] = {10, 5, 3, 6, 9, 1, 4, 2, 7, 8};
-int numbers2[10] = {20, 15, 13, 16, 19, 11, 14, 12, 17, 18};
+int numbers1[10] = {9, 4, 2, 5, 8, 0, 3, 1, 6, 7};
+int numbers2[10] = {19, 14, 12, 15, 18, 10, 13, 11, 16, 17};
 
 int colorPattern = 0;
 
@@ -87,6 +88,8 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(80, Lixie, NEO_GRB + NEO_KHZ800);
 
 void setup() {
   Wire.begin();
+
+  Serial.begin(9600);
 
   strip.begin();
   strip.show();
@@ -112,7 +115,7 @@ void setup() {
 void loop() {
   unsigned long currentMillis = millis();
 
-  if (digitalRead(switchSet) == HIGH) {
+  if (digitalRead(switchSet) == LOW) {
     if (currentMillis - previousMillis >= 100) {
       previousMillis = currentMillis;
       if (digitalRead(buttonH) == HIGH) {
@@ -134,13 +137,11 @@ void loop() {
 
   if (digitalRead(switch24HR) == HIGH) {
     twelveHour = true;
-    Clock.setClockMode(twelveHour);
   } else if (digitalRead(switch24HR) == LOW) {
     twelveHour = false;
-    Clock.setClockMode(twelveHour);
   }
 
-  if (digitalRead(switchDST) == HIGH) {
+  if (digitalRead(switchDST) == LOW) {
     if (DSTON == true) {
       DSTON = false;
       DSTOFF = true;
@@ -156,7 +157,7 @@ void loop() {
         }
       }
     }
-  } else if (digitalRead(switchDST) == LOW) {
+  } else if (digitalRead(switchDST) == HIGH) {
     if (DSTOFF == true) {
       DSTOFF = false;
       DSTON = true;
@@ -270,7 +271,7 @@ void rainbowCycle() {
   }
 }
 
-void displayTime (byte r, byte g, byte b) {
+void displayTime (int r, int g, int b) {
   Hour = Clock.getHour(h12, PM);
   Minute = Clock.getMinute();
 
@@ -281,9 +282,19 @@ void displayTime (byte r, byte g, byte b) {
   }
 
   digits[0] = (Hour / 10);
-  digits[1] = ((Hour % 10) / 10);
+  digits[1] = (Hour % 10);
   digits[2] = (Minute / 10);
-  digits[3] = ((Minute % 10) / 10);
+  digits[3] = (Minute % 10);
+
+  if (Hour == 0) {
+    digits[0] = 0;
+    digits[1] = 0;
+  }
+
+  if (Minute == 0) {
+    digits[2] = 0;
+    digits[3] = 0;
+  }
 
   getDigits();
 
@@ -294,6 +305,22 @@ void displayTime (byte r, byte g, byte b) {
   for (int j = 0; j < 8; j++) {
     strip.setPixelColor(litLEDS[j], r, g, b);
   }
+
+  strip.show();
+  Serial.print("Hour: ");
+  Serial.print(Hour);
+  Serial.print("    Min: ");
+  Serial.print(Minute);
+  Serial.print("    ");
+  Serial.print(digits[0]);
+  Serial.print(digits[1]);
+  Serial.print(" ");
+  Serial.print(digits[2]);
+  Serial.print(digits[3]);
+  Serial.print("    ");
+  Serial.print(digitalRead(switchDST));
+  Serial.print(digitalRead(switch24HR));
+  Serial.println(digitalRead(switchSet));
 }
 
 void getDigits() {
@@ -305,4 +332,8 @@ void getDigits() {
       }
     }
   }
+}
+
+void FreakOut() {
+
 }
