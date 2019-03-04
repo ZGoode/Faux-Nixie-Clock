@@ -7,8 +7,8 @@
    DIN - 7
 
    Buttons
-   Hour - 8
-   Minute - 9
+   Hour - 9
+   Minute - 8
    Color - 10
 
    Switches
@@ -16,14 +16,15 @@
    Time Set - 12
    24 Hour - 13
 */
+
 #include <Adafruit_NeoPixel.h>
 #include <DS3231.h>
 #include <Wire.h>
 
 const int Lixie = 7;
 
-const int buttonH = 8;
-const int buttonM = 9;
+const int buttonH = 9;
+const int buttonM = 8;
 const int buttonColor = 10;
 const int switchDST = 11;
 const int switchSet = 12;
@@ -31,8 +32,8 @@ const int switch24HR = 13;
 
 const int patternAmount = 11;
 
-int Hour = 12;
-int Minute = 00;
+int Hour;
+int Minute;
 
 byte WheelR (byte WheelPos);
 byte WheelG (byte WheelPos);
@@ -101,12 +102,15 @@ void setup() {
   pinMode(switchSet, INPUT);
   pinMode(switch24HR, INPUT);
 
+  Hour = Clock.getHour(h12, PM);
+  Minute = Clock.getMinute();
+
   Clock.setClockMode(false);
 
-  if (digitalRead(switchDST) == LOW) {
+  if (digitalRead(switchDST) == HIGH) {
     DSTOFF = false;
     DSTON = true;
-  } else if (digitalRead(switchDST) == HIGH) {
+  } else if (digitalRead(switchDST) == LOW) {
     DSTON = false;
     DSTOFF = true;
   }
@@ -116,28 +120,32 @@ void loop() {
   unsigned long currentMillis = millis();
 
   if (digitalRead(switchSet) == LOW) {
-    if (currentMillis - previousMillis >= 100) {
+    Serial.print("set");
+    if (currentMillis - previousMillis >= 250) {
       previousMillis = currentMillis;
       if (digitalRead(buttonH) == HIGH) {
         Hour++;
+        Serial.print("Hour");
         if (Hour > 24) {
           Hour = 0;
         }
         Clock.setHour(Hour);
       }
+
       if (digitalRead(buttonM) == HIGH) {
         Minute++;
+        Serial.print("Minute");
         if (Minute > 60) {
           Minute = 0;
         }
-        Clock.setHour(Minute);
+        Clock.setMinute(Minute);
       }
     }
   }
 
-  if (digitalRead(switch24HR) == HIGH) {
+  if (digitalRead(switch24HR) == LOW) {
     twelveHour = true;
-  } else if (digitalRead(switch24HR) == LOW) {
+  } else if (digitalRead(switch24HR) == HIGH) {
     twelveHour = false;
   }
 
@@ -147,13 +155,17 @@ void loop() {
       DSTOFF = true;
       if (twelveHour == true) {
         Hour++;
+        Clock.setHour(Hour);
         if (Hour > 12) {
           Hour = 1;
+          Clock.setHour(Hour);
         }
       } else if (twelveHour == false) {
         Hour++;
+        Clock.setHour(Hour);
         if (Hour > 24) {
           Hour = 0;
+          Clock.setHour(Hour);
         }
       }
     }
@@ -163,18 +175,22 @@ void loop() {
       DSTON = true;
       if (twelveHour == true) {
         Hour--;
+        Clock.setHour(Hour);
         if (Hour < 1) {
           Hour = 12;
+          Clock.setHour(Hour);
         }
       } else if (twelveHour == false) {
         Hour--;
+        Clock.setHour(Hour);
         if (Hour < 0) {
           Hour = 24;
+          Clock.setHour(Hour);
         }
       }
     }
   }
-  if (currentMillis - previousMillis >= 100) {
+  if (currentMillis - previousMillis >= 250) {
     previousMillis = currentMillis;
 
     if (digitalRead(buttonColor) == HIGH) {
@@ -281,19 +297,19 @@ void displayTime (int r, int g, int b) {
     }
   }
 
-  digits[0] = (Hour / 10);
-  digits[1] = (Hour % 10);
-  digits[2] = (Minute / 10);
-  digits[3] = (Minute % 10);
+  digits[3] = (Hour / 10);
+  digits[2] = (Hour % 10);
+  digits[1] = (Minute / 10);
+  digits[0] = (Minute % 10);
 
   if (Hour == 0) {
-    digits[0] = 0;
-    digits[1] = 0;
+    digits[3] = 0;
+    digits[2] = 0;
   }
 
   if (Minute == 0) {
-    digits[2] = 0;
-    digits[3] = 0;
+    digits[0] = 0;
+    digits[1] = 0;
   }
 
   getDigits();
@@ -320,7 +336,10 @@ void displayTime (int r, int g, int b) {
   Serial.print("    ");
   Serial.print(digitalRead(switchDST));
   Serial.print(digitalRead(switch24HR));
-  Serial.println(digitalRead(switchSet));
+  Serial.print(digitalRead(switchSet));
+  Serial.print(digitalRead(buttonH));
+  Serial.print(digitalRead(buttonM));
+  Serial.println(digitalRead(buttonColor));
 }
 
 void getDigits() {
